@@ -51,11 +51,19 @@ export function TripForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="planner-form rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-950"
+      className="planner-form"
     >
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="form-topline">
+        <div>
+          <span className="form-kicker">THE GOOD PART STARTS HERE</span>
+          <h3>Make it yours.</h3>
+        </div>
+        <span className="form-step">01 <i /> 02</span>
+      </div>
+      <div className="form-fields">
         <Field
           label="Current address"
+          icon="↗"
           error={fieldErrors.origin?.[0]}
           htmlFor="origin"
         >
@@ -70,6 +78,7 @@ export function TripForm({
         </Field>
         <Field
           label="Destination"
+          icon="⌖"
           error={fieldErrors.destination?.[0]}
           htmlFor="destination"
         >
@@ -81,8 +90,8 @@ export function TripForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Budget" error={fieldErrors.budget?.[0]} htmlFor="budget">
-          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
+        <Field label="Your budget" icon="$" error={fieldErrors.budget?.[0]} htmlFor="budget">
+          <div className="budget-control">
             <input
               id="budget"
               type="number"
@@ -90,12 +99,12 @@ export function TripForm({
               step="1"
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
-              className={`${inputClass} min-w-0`}
+              className={`${inputClass} budget-input`}
             />
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
-              className={`${inputClass} w-24 shrink-0`}
+              className={`${inputClass} currency-select`}
               aria-label="Currency"
             >
               {CURRENCIES.map((code) => (
@@ -108,6 +117,7 @@ export function TripForm({
         </Field>
         <Field
           label="Duration"
+          icon="◷"
           error={fieldErrors.durationDays?.[0]}
           htmlFor="duration"
         >
@@ -125,7 +135,7 @@ export function TripForm({
           </select>
         </Field>
         {preset === "custom" ? (
-          <Field label="Custom days" htmlFor="customDays">
+          <Field label="Custom days" icon="◷" htmlFor="customDays">
             <input
               id="customDays"
               type="number"
@@ -140,7 +150,7 @@ export function TripForm({
       </div>
 
       {formError ? (
-        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+        <p className="form-error">
           {formError}
         </p>
       ) : null}
@@ -148,36 +158,40 @@ export function TripForm({
       <button
         type="submit"
         disabled={loading}
-        className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-teal-800 px-5 text-sm font-medium text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+        className="submit-button"
       >
-        {loading ? "Planning your trip…" : "Plan my trip"}
+        {loading ? "Curating your escape…" : "Build my trip plan"}
+        <span aria-hidden="true">{loading ? "✦" : "↗"}</span>
       </button>
     </form>
   );
 }
 
 const inputClass =
-  "h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 outline-none ring-teal-700/30 focus:ring-2 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100";
+  "form-input";
 
 function Field({
   label,
   htmlFor,
   error,
+  icon,
   children,
 }: {
   label: string;
   htmlFor: string;
   error?: string;
+  icon: string;
   children: ReactNode;
 }) {
   return (
-    <label htmlFor={htmlFor} className="flex min-w-0 flex-col gap-1.5 text-sm">
-      <span className="font-medium text-stone-800 dark:text-stone-200">
+    <label htmlFor={htmlFor} className="form-field">
+      <span className="field-label">
+        <i aria-hidden="true">{icon}</i>
         {label}
       </span>
       {children}
       {error ? (
-        <span className="text-xs text-red-700 dark:text-red-400">{error}</span>
+        <span className="field-error">{error}</span>
       ) : null}
     </label>
   );

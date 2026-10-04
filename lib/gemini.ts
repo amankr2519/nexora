@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { tripPlanSchema, type TripInput, type TripPlan } from "./trip-plan";
 
 const MODEL = "gemini-3.6-flash";
+const GROQ_MODEL = "openai/gpt-oss-20b";
 
 const SYSTEM_PROMPT = `You are Nexora, a practical travel planner for a solo traveler.
 
@@ -181,35 +182,96 @@ function userPrompt(input: TripInput): string {
 }
 
 export async function generateTripPlan(input: TripInput): Promise<TripPlan> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured");
+  let geminiError: unknown;
+
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        contents: userPrompt(input),
+        config: {
+          systemInstruction: SYSTEM_PROMPT,
+          responseMimeType: "application/json",
+          responseJsonSchema: tripPlanJsonSchema,
+          temperature: 0.7,
+          maxOutputTokens: 8192,
+        },
+      });
+
+      return parseTripPlan(response.text, "Gemini");
+    } catch (error) {
+      geminiError = error;
+    }
+  } else {
+    geminiError = new Error("GEMINI_API_KEY is not configured");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: userPrompt(input),
-    config: {
-      systemInstruction: SYSTEM_PROMPT,
-      responseMimeType: "application/json",
-      responseJsonSchema: tripPlanJsonSchema,
-      temperature: 0.7,
-      maxOutputTokens: 8192,
+  const groqApiKey = process.env.GROQ_API_KEY;
+  if (!groqApiKey) {
+    throw new Error(
+      geminiError instanceof Error
+        ? `${geminiError.message}. GROQ_API_KEY is not configured for fallback.`
+        : "GEMINI_API_KEY and GROQ_API_KEY are not configured",
+    );
+  }
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${groqApiKey}`,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userPrompt(input) },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "trip_plan",
+          strict: true,
+          schema: tripPlanJsonSchema,
+        },
+      },
+      temperature: 0.7,
+      max_completion_tokens: 8192,
+      reasoning_effort: "low",
+    }),
   });
 
-  const text = response.text;
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Groq request failed (${response.status}): ${detail}`);
+  }
+
+  const result = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string | null } }>;
+  };
+  const plan = parseTripPlan(result.choices?.[0]?.message?.content, "Groq");
+  return plan;
+}
+
+function parseTripPlan(text: string | null | undefined, provider: string): TripPlan {
   if (!text) {
-    throw new Error("Gemini returned an empty response");
+    throw new Error(`${provider} returned an empty response`);
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
-    throw new Error("Gemini returned invalid JSON");
+    throw new Error(`${provider} returned invalid JSON`);
   }
 
-  return tripPlanSchema.parse(parsed);
+  try {
+    return tripPlanSchema.parse(parsed);
+  } catch (error) {
+    console.error(`${provider} returned data that failed trip-plan validation.`, error);
+    throw new Error(
+      `${provider} returned a trip plan with missing or invalid fields. Please retry.`,
+    );
+  }
 }

@@ -28,9 +28,14 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to generate trip plan";
-    const isConfig = message.includes("GEMINI_API_KEY");
+    const isConfig =
+      message.includes("GEMINI_API_KEY") || message.includes("GROQ_API_KEY");
     return Response.json(
-      { error: isConfig ? "Server is missing GEMINI_API_KEY" : message },
+      {
+        error: isConfig
+          ? "Server is missing one or more required LLM API keys"
+          : message,
+      },
       { status: 502 },
     );
   }

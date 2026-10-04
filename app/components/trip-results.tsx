@@ -1,191 +1,10 @@
-import type { Currency, TripInput, TripPlan } from "@/lib/trip-plan";
 import type { ReactNode } from "react";
+import type { TripInput, TripPlan } from "@/lib/trip-plan";
 
-type TripResultsProps = {
-  plan: TripPlan;
-  input: TripInput;
-};
+type TripResultsProps = { plan: TripPlan; input: TripInput };
+type TableRow = { key: string; cells: ReactNode[] };
 
-export function TripResults({ plan, input }: TripResultsProps) {
-  const money = (value: number) => formatMoney(value, input.currency);
-  const enough = plan.summary.budgetEnough;
-
-  return (
-    <div className="flex flex-col gap-8">
-      <section
-        className={`rounded-2xl border p-6 ${bannerClass(enough)}`}
-      >
-        <p className="text-xs font-semibold uppercase tracking-wide">
-          {enoughLabel(enough)}
-        </p>
-        <h2 className="mt-1 text-2xl font-semibold">
-          {plan.summary.destinationName} · {plan.summary.durationDays} days
-        </h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6">{plan.summary.verdict}</p>
-        <p className="mt-4 text-sm">
-          Estimated total:{" "}
-          <strong>{money(plan.summary.totalEstimatedCost)}</strong> vs budget{" "}
-          <strong>{money(input.budget)}</strong>
-        </p>
-        <p className="mt-1 text-xs opacity-80">
-          Estimates only — not live airline or hotel prices. From {input.origin}.
-        </p>
-      </section>
-
-      <Section title="Flights" subtitle="Typical routes and estimated round-trip cost">
-        <Table
-          headers={["From", "To", "Route", "Cost range", "Notes"]}
-          rows={plan.flights.map((row) => [
-            row.from,
-            row.to,
-            row.typicalRoute,
-            `${money(row.costMin)} – ${money(row.costMax)}`,
-            row.notes,
-          ])}
-        />
-      </Section>
-
-      <Section title="Where to stay" subtitle="Areas and lodging types that fit the trip">
-        <Table
-          headers={["Area", "Type", "Nightly", "Trip total", "Why"]}
-          rows={plan.stay.map((row) => [
-            row.area,
-            row.lodgingType,
-            `${money(row.nightlyMin)} – ${money(row.nightlyMax)}`,
-            money(row.totalEstimate),
-            row.why,
-          ])}
-        />
-      </Section>
-
-      <Section title="Transportation" subtitle="How to get around once you arrive">
-        <Table
-          headers={["Mode", "When to use", "Estimated cost", "Notes"]}
-          rows={plan.transport.map((row) => [
-            row.mode,
-            row.whenToUse,
-            money(row.estimatedCost),
-            row.notes,
-          ])}
-        />
-      </Section>
-
-      <Section title="Food — what you must eat" subtitle="Signature dishes and iconic stops">
-        <Table
-          headers={["Name", "Type", "Area", "Why", "Est. cost"]}
-          rows={plan.food.map((row) => [
-            row.name,
-            row.type,
-            row.area,
-            row.whyMustEat,
-            money(row.estimatedCost),
-          ])}
-        />
-      </Section>
-
-      <Section
-        title="Most famous places"
-        subtitle="Prioritized so the highlights fit the duration"
-      >
-        <Table
-          headers={["Place", "Why famous", "When", "Time needed", "Priority"]}
-          rows={plan.places.map((row) => [
-            row.name,
-            row.whyFamous,
-            row.suggestedDayOrWeek,
-            row.timeNeeded,
-            row.priority,
-          ])}
-        />
-      </Section>
-
-      <Section title="Shopping" subtitle="Markets and specialties worth a slice of budget">
-        <Table
-          headers={["What / where", "Area", "Spend", "Notes"]}
-          rows={plan.shopping.map((row) => [
-            row.itemOrMarket,
-            row.area,
-            money(row.estimatedSpend),
-            row.notes,
-          ])}
-        />
-      </Section>
-
-      <Section title="Budget breakdown" subtitle="Rough split of the trip spend">
-        <Table
-          headers={["Category", "Amount", "Percent"]}
-          rows={plan.budgetBreakdown.map((row) => [
-            row.category,
-            money(row.amount),
-            `${row.percent}%`,
-          ])}
-        />
-      </Section>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  children: ReactNode;
-}) {
-  return (
-    <section>
-      <h3 className="text-lg font-semibold text-[#102824]">
-        {title}
-      </h3>
-      <p className="mb-3 text-sm text-stone-600 dark:text-stone-400">{subtitle}</p>
-      {children}
-    </section>
-  );
-}
-
-function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
-  if (rows.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-stone-300 p-4 text-sm text-stone-500 dark:border-stone-700">
-        No items returned for this section.
-      </p>
-    );
-  }
-
-  return (
-    <div className="overflow-x-auto rounded-xl border border-stone-200 dark:border-stone-800">
-      <table className="min-w-full border-collapse text-left text-sm">
-        <thead className="bg-stone-100 text-stone-700 dark:bg-stone-900 dark:text-stone-300">
-          <tr>
-            {headers.map((header) => (
-              <th key={header} className="px-3 py-2 font-medium whitespace-nowrap">
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr
-              key={index}
-              className="border-t border-stone-200 align-top dark:border-stone-800"
-            >
-              {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className="px-3 py-2 leading-5">
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function formatMoney(value: number, currency: Currency) {
+function money(value: number, currency: TripInput["currency"]) {
   try {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
@@ -193,22 +12,238 @@ function formatMoney(value: number, currency: Currency) {
       maximumFractionDigits: 0,
     }).format(value);
   } catch {
-    return `${currency} ${value}`;
+    return `${currency} ${Math.round(value).toLocaleString()}`;
   }
 }
 
-function enoughLabel(value: TripPlan["summary"]["budgetEnough"]) {
-  if (value === "yes") return "Budget looks enough";
-  if (value === "tight") return "Budget is tight";
-  return "Budget is not enough";
+function DataTable({
+  title,
+  description,
+  columns,
+  rows,
+}: {
+  title: string;
+  description: string;
+  columns: string[];
+  rows: TableRow[];
+}) {
+  return (
+    <section className="trip-table-section">
+      <div className="trip-table-heading">
+        <div>
+          <h3>{title}</h3>
+          <p>{description}</p>
+        </div>
+        <span>
+          {rows.length} {rows.length === 1 ? "item" : "items"}
+        </span>
+      </div>
+      {rows.length ? (
+        <div className="trip-table-scroll">
+          <table className="trip-data-table">
+            <thead>
+              <tr>
+                {columns.map((column) => (
+                  <th key={column} scope="col">
+                    {column}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.key}>
+                  {row.cells.map((cell, index) => (
+                    <td key={`${row.key}-${index}`} data-label={columns[index]}>
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="trip-table-empty">
+          No recommendations were included for this section.
+        </p>
+      )}
+    </section>
+  );
 }
 
-function bannerClass(value: TripPlan["summary"]["budgetEnough"]) {
-  if (value === "yes") {
-    return "border-teal-200 bg-teal-50 text-teal-950 dark:border-teal-900 dark:bg-teal-950 dark:text-teal-50";
-  }
-  if (value === "tight") {
-    return "border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-50";
-  }
-  return "border-red-200 bg-red-50 text-red-950 dark:border-red-900 dark:bg-red-950 dark:text-red-50";
+export function TripResults({ plan, input }: TripResultsProps) {
+  const { summary } = plan;
+  const statusLabel =
+    summary.budgetEnough === "yes"
+      ? "Within budget"
+      : summary.budgetEnough === "tight"
+        ? "Budget is tight"
+        : "Budget is not enough";
+  const summaryRows: TableRow[] = [
+    { key: "destination", cells: ["Destination", summary.destinationName] },
+    { key: "duration", cells: ["Duration", `${summary.durationDays} days`] },
+    { key: "origin", cells: ["Starting from", input.origin] },
+    {
+      key: "estimate",
+      cells: [
+        "Estimated total",
+        money(summary.totalEstimatedCost, input.currency),
+      ],
+    },
+    {
+      key: "budget",
+      cells: ["Your budget", money(input.budget, input.currency)],
+    },
+    { key: "verdict", cells: ["Plan overview", summary.verdict] },
+  ];
+
+  return (
+    <div className="trip-response">
+      <section
+        className={`trip-summary ${summary.budgetEnough === "no" ? "trip-summary-over" : summary.budgetEnough === "tight" ? "trip-summary-tight" : ""}`}
+        aria-labelledby="trip-summary-title"
+      >
+        <div className="trip-summary-heading">
+          <div>
+            <p>YOUR TRIP PLAN</p>
+            <h2 id="trip-summary-title">{summary.destinationName}</h2>
+          </div>
+          <strong>{statusLabel}</strong>
+        </div>
+        <div className="trip-summary-table-wrap">
+          <table className="trip-summary-table">
+            <tbody>
+              {summaryRows.map(({ key, cells }) => (
+                <tr key={key}>
+                  <th scope="row">{cells[0]}</th>
+                  <td>{cells[1]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <DataTable
+        title="Flights"
+        description="Suggested routes and estimated fares"
+        columns={["From", "To", "Typical route", "Estimated cost", "Notes"]}
+        rows={plan.flights.map((item, index) => ({
+          key: `flight-${index}`,
+          cells: [
+            item.from,
+            item.to,
+            item.typicalRoute,
+            `${money(item.costMin, input.currency)} – ${money(item.costMax, input.currency)}`,
+            item.notes,
+          ],
+        }))}
+      />
+      <DataTable
+        title="Stay"
+        description="Areas and lodging options for your trip"
+        columns={[
+          "Area",
+          "Lodging",
+          "Nightly cost",
+          "Stay estimate",
+          "Why stay here",
+        ]}
+        rows={plan.stay.map((item, index) => ({
+          key: `stay-${index}`,
+          cells: [
+            item.area,
+            item.lodgingType,
+            `${money(item.nightlyMin, input.currency)} – ${money(item.nightlyMax, input.currency)}`,
+            money(item.totalEstimate, input.currency),
+            item.why,
+          ],
+        }))}
+      />
+      <DataTable
+        title="Transport"
+        description="Ways to get around at your destination"
+        columns={["Mode", "When to use", "Estimated cost", "Notes"]}
+        rows={plan.transport.map((item, index) => ({
+          key: `transport-${index}`,
+          cells: [
+            item.mode,
+            item.whenToUse,
+            money(item.estimatedCost, input.currency),
+            item.notes,
+          ],
+        }))}
+      />
+      <DataTable
+        title="Food"
+        description="Local dishes and food stops to try"
+        columns={[
+          "Dish / place",
+          "Type",
+          "Area",
+          "Estimated cost",
+          "Why try it",
+        ]}
+        rows={plan.food.map((item, index) => ({
+          key: `food-${index}`,
+          cells: [
+            item.name,
+            item.type,
+            item.area,
+            money(item.estimatedCost, input.currency),
+            item.whyMustEat,
+          ],
+        }))}
+      />
+      <DataTable
+        title="Places"
+        description="Recommended sights, in suggested order"
+        columns={[
+          "Place",
+          "Suggested day",
+          "Time needed",
+          "Priority",
+          "Why visit",
+        ]}
+        rows={plan.places.map((item, index) => ({
+          key: `place-${index}`,
+          cells: [
+            item.name,
+            item.suggestedDayOrWeek,
+            item.timeNeeded,
+            item.priority,
+            item.whyFamous,
+          ],
+        }))}
+      />
+      <DataTable
+        title="Shopping"
+        description="Markets and items worth setting money aside for"
+        columns={["Item / market", "Area", "Estimated spend", "Notes"]}
+        rows={plan.shopping.map((item, index) => ({
+          key: `shopping-${index}`,
+          cells: [
+            item.itemOrMarket,
+            item.area,
+            money(item.estimatedSpend, input.currency),
+            item.notes,
+          ],
+        }))}
+      />
+      <DataTable
+        title="Budget breakdown"
+        description="Estimated spend by category"
+        columns={["Category", "Amount", "Share of budget"]}
+        rows={plan.budgetBreakdown.map((item, index) => ({
+          key: `budget-${index}`,
+          cells: [
+            item.category,
+            money(item.amount, input.currency),
+            `${item.percent}%`,
+          ],
+        }))}
+      />
+    </div>
+  );
 }

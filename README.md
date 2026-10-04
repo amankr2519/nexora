@@ -16,6 +16,7 @@ Prices are planning estimates, not live airline or hotel prices.
 
 - Node.js 20 or newer
 - A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
+- A Groq API key from [Groq Console](https://console.groq.com/keys) for automatic fallback
 
 ## Getting started
 
@@ -35,6 +36,7 @@ Add your API key to `.env.local`:
 
 ```env
 GEMINI_API_KEY=your_api_key
+GROQ_API_KEY=your_groq_api_key
 ```
 
 Start the development server:
@@ -58,11 +60,11 @@ Then open [http://localhost:3000](http://localhost:3000).
 
 1. The browser collects and submits the trip details from the planner form.
 2. `POST /api/plan` validates the request with the shared Zod schema.
-3. The server sends the validated input to Gemini with a strict JSON response schema.
+3. The server sends the validated input to Gemini with a strict JSON response schema. If Gemini is unavailable or returns an unusable response, it retries through Groq with `openai/gpt-oss-20b` and its strict JSON schema mode.
 4. The response is parsed and validated again before it is returned to the browser.
 5. The client renders the summary and itinerary tables.
 
-The Gemini API key is used only on the server and must not be exposed in client-side code.
+Both provider API keys are used only on the server and must not be exposed in client-side code.
 
 ## API
 

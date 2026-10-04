@@ -1,6 +1,7 @@
 "use client";
 
 import { TripForm } from "@/app/components/trip-form";
+import { TripPlanningLoader } from "@/app/components/trip-planning-loader";
 import { TripResults } from "@/app/components/trip-results";
 import type {
   FieldErrors,
@@ -17,11 +18,15 @@ export function Planner() {
   const [formError, setFormError] = useState<string | null>(null);
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [input, setInput] = useState<TripInput | null>(null);
+  const [loadingInput, setLoadingInput] = useState<TripInput | null>(null);
 
   async function handleSubmit(nextInput: TripInput) {
     setLoading(true);
+    setLoadingInput(nextInput);
     setFieldErrors({});
     setFormError(null);
+    setPlan(null);
+    setInput(null);
 
     try {
       const response = await fetch("/api/plan", {
@@ -49,6 +54,7 @@ export function Planner() {
       setFormError("Network error. Try again.");
     } finally {
       setLoading(false);
+      setLoadingInput(null);
     }
   }
 
@@ -60,11 +66,7 @@ export function Planner() {
         formError={formError}
         onSubmit={handleSubmit}
       />
-      {loading ? (
-        <p className="text-sm text-stone-600 dark:text-stone-400">
-          Your personalized itinerary is being prepared…
-        </p>
-      ) : null}
+      {loading && loadingInput ? <TripPlanningLoader input={loadingInput} /> : null}
       {plan && input ? <TripResults plan={plan} input={input} /> : null}
     </div>
   );
