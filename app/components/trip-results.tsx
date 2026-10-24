@@ -28,23 +28,23 @@ function DataTable({
   rows: TableRow[];
 }) {
   return (
-    <section className="trip-table-section">
-      <div className="trip-table-heading">
+    <section className="min-w-0 overflow-hidden rounded-[.9rem] border border-[#e6e1d7] bg-[#fffefa]">
+      <div className="flex items-center justify-between gap-4 px-4 pb-3 pt-4">
         <div>
-          <h3>{title}</h3>
-          <p>{description}</p>
+          <h3 className="m-0 font-serif text-2xl font-normal tracking-tight text-[#203b31]">{title}</h3>
+          <p className="mt-1 text-sm leading-relaxed text-[#78837a]">{description}</p>
         </div>
-        <span>
+        <span className="whitespace-nowrap text-xs text-[#68766c]">
           {rows.length} {rows.length === 1 ? "item" : "items"}
         </span>
       </div>
       {rows.length ? (
-        <div className="trip-table-scroll">
-          <table className="trip-data-table">
-            <thead>
+        <div className="max-w-full overflow-x-auto">
+          <table className="w-full min-w-[680px] border-collapse text-left">
+            <thead className="bg-[#f1f2ec]">
               <tr>
                 {columns.map((column) => (
-                  <th key={column} scope="col">
+                  <th className="whitespace-nowrap px-4 py-3 text-[.82rem] font-bold tracking-wide text-[#59695f]" key={column} scope="col">
                     {column}
                   </th>
                 ))}
@@ -54,7 +54,7 @@ function DataTable({
               {rows.map((row) => (
                 <tr key={row.key}>
                   {row.cells.map((cell, index) => (
-                    <td key={`${row.key}-${index}`} data-label={columns[index]}>
+                    <td className={`min-w-28 border-t border-[#eeeae2] px-4 py-3 text-[.92rem] leading-relaxed text-[#46584d] align-top ${index === 0 ? "font-semibold text-[#294437]" : ""}`} key={`${row.key}-${index}`} data-label={columns[index]}>
                       {cell}
                     </td>
                   ))}
@@ -64,7 +64,7 @@ function DataTable({
           </table>
         </div>
       ) : (
-        <p className="trip-table-empty">
+        <p className="m-0 border-t border-[#eeeae2] px-4 py-4 text-[.9rem] text-[#68766c]">
           No recommendations were included for this section.
         </p>
       )}
@@ -99,20 +99,20 @@ export function TripResults({ plan, input }: TripResultsProps) {
   ];
 
   return (
-    <div className="trip-response">
+    <div className="flex min-w-0 flex-col gap-4 rounded-[1.15rem] border border-[#e4e0d7] bg-[#fbfaf6] p-3 text-[#233b32] sm:p-6">
       <section
-        className={`trip-summary ${summary.budgetEnough === "no" ? "trip-summary-over" : summary.budgetEnough === "tight" ? "trip-summary-tight" : ""}`}
+        className={`overflow-hidden rounded-[.9rem] border p-4 sm:p-6 ${summary.budgetEnough === "no" ? "border-[#f0cbc4] bg-[#fff0ed]" : summary.budgetEnough === "tight" ? "border-[#ead9ac] bg-[#fbf3df]" : "border-[#dce5db] bg-[#e9eee7]"}`}
         aria-labelledby="trip-summary-title"
       >
-        <div className="trip-summary-heading">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p>YOUR TRIP PLAN</p>
-            <h2 id="trip-summary-title">{summary.destinationName}</h2>
+            <p className="mb-1 text-[.78rem] font-bold tracking-[.11em] text-[#758078]">YOUR TRIP PLAN</p>
+            <h2 className="m-0 break-words font-serif text-[clamp(1.8rem,5vw,3rem)] font-normal leading-none tracking-[-.045em] text-[#1d382f]" id="trip-summary-title">{summary.destinationName}</h2>
           </div>
-          <strong>{statusLabel}</strong>
+          <strong className={`rounded-full px-4 py-2 text-[.82rem] ${summary.budgetEnough === "no" ? "bg-[#f4d5cf] text-[#8d3028]" : summary.budgetEnough === "tight" ? "bg-[#f0e2bd] text-[#80642c]" : "bg-[#dce8d9] text-[#3c6248]"}`}>{statusLabel}</strong>
         </div>
-        <div className="trip-summary-table-wrap">
-          <table className="trip-summary-table">
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse text-left [&_tr]:border-t [&_tr]:border-[#2c4637]/15 [&_th]:py-3 [&_th]:pr-3 [&_th]:align-top [&_th]:text-[.9rem] [&_th]:font-semibold [&_th]:text-[#69776d] [&_td]:py-3 [&_td]:pr-3 [&_td]:align-top [&_td]:text-[.95rem] [&_td]:leading-relaxed [&_td]:text-[#2e493a]">
             <tbody>
               {summaryRows.map(({ key, cells }) => (
                 <tr key={key}>
